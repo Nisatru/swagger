@@ -1,12 +1,14 @@
 import { Type } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common/enums/http-status.enum';
+
 import { omit } from 'lodash';
+
 import { DECORATORS } from '../constants';
 import {
   ResponseObject,
   SchemaObject
 } from '../interfaces/open-api-spec.interface';
-import { getTypeIsArrayTuple } from './helpers';
+import { getTypeIsArrayTuple, getValidResponseName } from './helpers';
 
 export interface ApiResponseMetadata
   extends Omit<ResponseObject, 'description'> {
@@ -37,7 +39,7 @@ export function ApiResponse(
   (options as ApiResponseMetadata).isArray = isArray;
   options.description = options.description ? options.description : '';
 
-  const groupedMetadata = { [options.status]: omit(options, 'status') };
+  const apiResponseMetadata = omit(options, 'status');
   return (
     target: object,
     key?: string | symbol,
@@ -46,11 +48,12 @@ export function ApiResponse(
     if (descriptor) {
       const responses =
         Reflect.getMetadata(DECORATORS.API_RESPONSE, descriptor.value) || {};
+      const statusName = getValidResponseName(options.status, responses);
       Reflect.defineMetadata(
         DECORATORS.API_RESPONSE,
         {
           ...responses,
-          ...groupedMetadata
+          ...(statusName && { [statusName]: apiResponseMetadata })
         },
         descriptor.value
       );
@@ -58,11 +61,12 @@ export function ApiResponse(
     }
     const responses =
       Reflect.getMetadata(DECORATORS.API_RESPONSE, target) || {};
+    const statusName = getValidResponseName(options.status, responses);
     Reflect.defineMetadata(
       DECORATORS.API_RESPONSE,
       {
         ...responses,
-        ...groupedMetadata
+        ...(statusName && { [statusName]: apiResponseMetadata })
       },
       target
     );

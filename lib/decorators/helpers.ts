@@ -1,4 +1,5 @@
 import { isArray, isUndefined, negate, pickBy } from 'lodash';
+
 import { DECORATORS } from '../constants';
 
 export function createMethodDecorator<T = any>(
@@ -129,3 +130,14 @@ export function getTypeIsArrayTuple(
   const type = isInputArray ? input[0] : input;
   return [type, isInputArray];
 }
+
+export const getValidResponseName = (
+  name: string | number,
+  responses: { [key: string]: any }
+): string => {
+  let validName = name.toString();
+  while (responses[validName]) {
+    validName += ' ';
+  }
+  return validName;
+};
